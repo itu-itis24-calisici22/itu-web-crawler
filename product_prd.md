@@ -1,7 +1,7 @@
 # Product Requirements Document (PRD)
 ## ITU Web Crawler & Real-Time Search Engine
 
-**Author:** [Student Name]  
+**Author:** [Burak Çalışıcı - 820220329]  
 **Date:** March 2026  
 **Course:** AI Aided Computer Engineering – Istanbul Technical University  
 **Version:** 1.0
