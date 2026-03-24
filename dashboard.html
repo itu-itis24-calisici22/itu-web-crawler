@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITU Web Crawler — Dashboard</title>
+    <style>
+        :root {
+            --bg: #0a0a12;
+            --surface: #12121e;
+            --surface2: #1a1a2e;
+            --border: #2a2a4a;
+            --accent: #6c5ce7;
+            --accent2: #a29bfe;
+            --green: #00e676;
+            --orange: #ff9100;
+            --red: #ff5252;
+            --text: #e8e8f0;
+            --text2: #8888a8;
+            --radius: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 0 32px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 32px;
+        }
+
+        header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header .badge {
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .badge-running { background: rgba(0,230,118,0.15); color: var(--green); }
+        .badge-paused { background: rgba(255,145,0,0.15); color: var(--orange); }
+        .badge-idle { background: rgba(136,136,168,0.15); color: var(--text2); }
+
+        /* Metrics grid */
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .metric-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: border-color 0.2s;
+        }
+
+        .metric-card:hover { border-color: var(--accent); }
+
+        .metric-label {
+            font-size: 0.65rem;
+            color: var(--text2);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .metric-value.green { color: var(--green); }
+        .metric-value.orange { color: var(--orange); }
+        .metric-value.red { color: var(--red); }
+        .metric-value.accent { color: var(--accent2); }
+
+        /* Sections */
+        .section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 0.75rem;
+            color: var(--text2);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+        }
+
+        /* Forms */
+        .form-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.7rem;
+            color: var(--text2);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus { border-color: var(--accent); }
+
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        button:hover { background: var(--accent2); transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
+
+        button.secondary {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+        }
+
+        button.secondary:hover { border-color: var(--accent); }
+
+        button.danger { background: var(--red); }
+        button.danger:hover { background: #ff7979; }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            height: 6px;
+            background: var(--bg);
+            border-radius: 3px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        /* Results table */
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        .results-table th {
+            text-align: left;
+            padding: 10px 12px;
+            color: var(--text2);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .results-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(42,42,74,0.4);
+            max-width: 400px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .results-table tr:hover td { background: rgba(108,92,231,0.05); }
+
+        .results-table a {
+            color: var(--accent2);
+            text-decoration: none;
+        }
+
+        .results-table a:hover { text-decoration: underline; }
+
+        .score-badge {
+            background: rgba(108,92,231,0.15);
+            color: var(--accent2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        /* Jobs list */
+        .job-item {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .job-url {
+            color: var(--accent2);
+            font-size: 0.8rem;
+            word-break: break-all;
+        }
+
+        .job-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 0.7rem;
+            color: var(--text2);
+        }
+
+        .job-stats span { font-weight: 600; color: var(--text); }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text2);
+            font-size: 0.85rem;
+        }
+
+        /* toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--surface2);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 0.8rem;
+            z-index: 999;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        .toast.error { border-color: var(--red); }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 16px; }
+            .metrics { grid-template-columns: repeat(2, 1fr); }
+            .form-group { min-width: 140px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🕷️ ITU Web Crawler</h1>
+            <div id="statusBadge" class="badge badge-idle">Idle</div>
+        </header>
+
+        <!-- Metrics -->
+        <div class="metrics">
+            <div class="metric-card">
+                <div class="metric-label">Pages Crawled</div>
+                <div class="metric-value green" id="metCrawled">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Pages Indexed</div>
+                <div class="metric-value accent" id="metIndexed">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Queue Depth</div>
+                <div class="metric-value" id="metQueue">0</div>
+                <div class="progress-bar"><div class="progress-fill" id="queueBar" style="width:0%"></div></div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Errors</div>
+                <div class="metric-value red" id="metErrors">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Back Pressure</div>
+                <div class="metric-value orange" id="metBP">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Workers</div>
+                <div class="metric-value" id="metWorkers">0</div>
+            </div>
+        </div>
+
+        <!-- Index -->
+        <div class="section">
+            <div class="section-title">Start Crawl</div>
+            <div class="form-row">
+                <div class="form-group" style="flex:3">
+                    <label>Origin URL</label>
+                    <input type="text" id="indexUrl" placeholder="https://example.com" />
+                </div>
+                <div class="form-group" style="flex:0.5; min-width:100px">
+                    <label>Max Depth (k)</label>
+                    <input type="number" id="indexDepth" value="2" min="0" max="10" />
+                </div>
+                <button onclick="startCrawl()">Crawl</button>
+            </div>
+            <div style="margin-top: 16px;">
+                <div class="controls">
+                    <button class="secondary" onclick="pauseCrawl()">⏸ Pause</button>
+                    <button class="secondary" onclick="resumeCrawl()">▶ Resume</button>
+                    <button class="danger" onclick="resetSystem()">⟲ Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Jobs -->
+        <div class="section">
+            <div class="section-title">Active Jobs</div>
+            <div id="jobsList">
+                <div class="empty-state">No active crawl jobs</div>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="section">
+            <div class="section-title">Search</div>
+            <div class="form-row">
+                <div class="form-group" style="flex:3">
+                    <label>Query</label>
+                    <input type="text" id="searchQuery" placeholder="Enter search keywords..." onkeydown="if(event.key==='Enter')doSearch()" />
+                </div>
+                <button onclick="doSearch()">Search</button>
+            </div>
+            <div id="searchResults" style="margin-top:16px;"></div>
+        </div>
+    </div>
+
+    <script>
+        // ---- API calls ----
+        async function api(method, path, body) {
+            const opts = { method, headers: { "Content-Type": "application/json" } };
+            if (body) opts.body = JSON.stringify(body);
+            const res = await fetch(path, opts);
+            return res.json();
+        }
+
+        function toast(msg, isError) {
+            const el = document.createElement("div");
+            el.className = "toast" + (isError ? " error" : "");
+            el.textContent = msg;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 3000);
+        }
+
+        // ---- Actions ----
+        async function startCrawl() {
+            const url = document.getElementById("indexUrl").value.trim();
+            const depth = parseInt(document.getElementById("indexDepth").value);
+            if (!url) return toast("Enter a URL", true);
+            try {
+                const res = await api("POST", "/api/index", { url, depth });
+                if (res.error) return toast(res.error, true);
+                toast(`Crawl started: ${res.url} (depth ${res.depth})`);
+                document.getElementById("indexUrl").value = "";
+            } catch (e) { toast("Failed to start crawl", true); }
+        }
+
+        async function pauseCrawl() {
+            await api("POST", "/api/pause");
+            toast("Crawler paused");
+        }
+
+        async function resumeCrawl() {
+            await api("POST", "/api/resume");
+            toast("Crawler resumed");
+        }
+
+        async function resetSystem() {
+            if (!confirm("Reset all data? This cannot be undone.")) return;
+            await api("POST", "/api/reset");
+            toast("System reset");
+            document.getElementById("searchResults").innerHTML = "";
+        }
+
+        async function doSearch() {
+            const q = document.getElementById("searchQuery").value.trim();
+            if (!q) return;
+            const res = await api("GET", `/api/search?q=${encodeURIComponent(q)}&limit=50`);
+            renderResults(res);
+        }
+
+        function renderResults(data) {
+            const el = document.getElementById("searchResults");
+            if (!data.results || data.results.length === 0) {
+                el.innerHTML = `<div class="empty-state">No results for "${data.query}"</div>`;
+                return;
+            }
+            let html = `<table class="results-table">
+                <thead><tr>
+                    <th>#</th><th>Title / URL</th><th>Origin</th><th>Depth</th><th>Score</th>
+                </tr></thead><tbody>`;
+            data.results.forEach((r, i) => {
+                const title = r.title || "(no title)";
+                html += `<tr>
+                    <td>${i + 1}</td>
+                    <td><a href="${r.relevant_url}" target="_blank" title="${r.relevant_url}">${title}</a></td>
+                    <td style="font-size:0.7rem; color:var(--text2)">${r.origin_url}</td>
+                    <td>${r.depth}</td>
+                    <td><span class="score-badge">${r.score.toFixed(4)}</span></td>
+                </tr>`;
+            });
+            html += "</tbody></table>";
+            el.innerHTML = html;
+        }
+
+        // ---- Metrics polling ----
+        async function refreshMetrics() {
+            try {
+                const m = await api("GET", "/api/metrics");
+                document.getElementById("metCrawled").textContent = m.total_pages_crawled;
+                document.getElementById("metIndexed").textContent = m.total_pages_indexed;
+                document.getElementById("metQueue").textContent = m.queue_depth;
+                document.getElementById("metErrors").textContent = m.total_errors;
+                document.getElementById("metBP").textContent = m.backpressure_hits;
+                document.getElementById("metWorkers").textContent = m.workers;
+
+                const pct = m.max_queue_depth > 0 ? (m.queue_depth / m.max_queue_depth) * 100 : 0;
+                document.getElementById("queueBar").style.width = pct + "%";
+
+                const badge = document.getElementById("statusBadge");
+                if (m.is_paused) {
+                    badge.textContent = "Paused";
+                    badge.className = "badge badge-paused";
+                } else if (m.queue_depth > 0 || m.jobs.some(j => j.status === "running")) {
+                    badge.textContent = "Crawling";
+                    badge.className = "badge badge-running";
+                } else {
+                    badge.textContent = "Idle";
+                    badge.className = "badge badge-idle";
+                }
+
+                // Jobs list
+                const jobsEl = document.getElementById("jobsList");
+                if (m.jobs.length === 0) {
+                    jobsEl.innerHTML = '<div class="empty-state">No active crawl jobs</div>';
+                } else {
+                    jobsEl.innerHTML = m.jobs.map(j => `
+                        <div class="job-item">
+                            <div class="job-url">${j.origin_url}</div>
+                            <div class="job-stats">
+                                depth: <span>${j.max_depth}</span>
+                                crawled: <span>${j.pages_crawled}</span>
+                                queued: <span>${j.pages_queued}</span>
+                                time: <span>${j.elapsed}s</span>
+                                status: <span>${j.status}</span>
+                            </div>
+                        </div>
+                    `).join("");
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        setInterval(refreshMetrics, 1500);
+        refreshMetrics();
+    </script>
+</body>
+</html>
